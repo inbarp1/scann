@@ -18,67 +18,97 @@
   Color should be set differently for each polygon.
   ====================*/
 void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb ) {
+
+  //set color, increment and mod 255 each time
   color c;
-  int top, mid, bot, temp;
+  c.red=(1+i*19)%255;
+  c.green=(2+i*37)%255;//+=37
+  c.blue=(3+i*87)%255;//+=83
+
+  //points will be at m->[0-2][i, i+1, i+2], set T/M/B based on y-values
+  int top, middle, bottom, temp;
+  top=i;
+  middle=i+1;
+  bottom=i+2;
+
+  if (points->m[1][bottom]>points->m[1][middle]) {
+    temp=bottom;
+    bottom=middle;
+    middle=temp;
+  }
+  if (points->m[1][bottom]>points->m[1][top]) {
+    temp=top;
+    top=bottom;
+    bottom=temp;
+  }
+  if (points->m[1][middle]>points->m[1][top]) {
+    temp=top;
+    top=middle;
+    middle=temp;
+  }
+
+  //printf("top: %d, middle: %d, bottom: %d\n",top,middle,bottom);
+  //printf("top: %lf, middle: %lf, bottom: %lf\n",points->m[1][top],points->m[1][middle],points->m[1][bottom]);
+  
   double x0,x1,delta_x0,delta_x1;
-  double z0,z1,delta_z0,delta_z1;
   double yb,ym,yt;
   int y;
-  c.red=(2+i*30)%255;
-  c.green=(1+i*20)%255;
-  c.blue=(3+i*50)%255;
-  top=i;
-  mid=i+1;
-  bot=i+2;
-  if (points->m[1][bot]>points->m[1][mid]) {
-    temp=bot;
-    bot=mid;
-    mid=temp;
-  }
-  if (points->m[1][bot]>points->m[1][top]) {
-    temp=top;
-    top=bot;
-    bot=temp;
-  }
-  if (points->m[1][mid]>points->m[1][top]) {
-    temp=top;
-    top=mid;
-    mid=temp;
-  }
-  yb=points->m[1][bot];
-  ym=points->m[1][mid];
+  //check=points->m[1][middle];
+
+  //y stuff
+  yb=points->m[1][bottom];
+  ym=points->m[1][middle];
   yt=points->m[1][top];
   y=yb;
-  delta_x0=(points->m[0][top]-points->m[0][bot])/(yt-yb);
-  delta_x1=(points->m[0][mid]-points->m[0][bot])/(ym-yb);
-  x0=points->m[0][bot];
+  delta_x0=(points->m[0][top]-points->m[0][bottom])/(yt-yb);//(points->m[1][top]-points->m[1][bottom]);
+  delta_x1=(points->m[0][middle]-points->m[0][bottom])/(ym-yb);//(points->m[1][middle]-points->m[1][bottom]);
+  x0=points->m[0][bottom];
   x1=x0;
-  delta_z0=(points->m[2][top]-points->m[2][bot])/(yt-yb);
-  delta_z1=(points->m[2][mid]-points->m[2][bot])/(ym-yb);
-  z0=points->m[2][bot];
+
+  //z stuff
+  double z0,z1,delta_z0,delta_z1;
+  delta_z0=(points->m[2][top]-points->m[2][bottom])/(yt-yb);//(points->m[1][top]-points->m[1][bottom]);
+  delta_z1=(points->m[2][middle]-points->m[2][bottom])/(ym-yb);//(points->m[1][middle]-points->m[1][bottom]);
+  z0=points->m[2][bottom];
   z1=z0;
+  
   while (y<ym) {
-    draw_line(x0,y,z0,x1,y,z1,s,zb,c);
+
+    draw_line(x0,y,z0,x1,y,z1,s,zb,c);//need to replace 0 with z values
+    
+    //increments
     y++;
     x0+=delta_x0;
     x1+=delta_x1;
     z0+=delta_z0;
     z1+=delta_z1;
+    //c.red=(c.red+19)%255;
+    //c.green=(c.green+37)%255;
+    //c.blue=(c.blue+83)%255;
   }
-  delta_x1=(points->m[0][top]-points->m[0][mid])/(yt-ym);
-  x1=points->m[0][mid];
 
-  delta_z1=(points->m[2][top]-points->m[2][mid])/(yt-ym);
-  z1=points->m[2][mid];
+
+  delta_x1=(points->m[0][top]-points->m[0][middle])/(yt-ym);//(points->m[1][top]-points->m[1][middle]);
+  x1=points->m[0][middle];
+
+  delta_z1=(points->m[2][top]-points->m[2][middle])/(yt-ym);//(points->m[1][top]-points->m[1][middle]);
+  z1=points->m[2][middle];
 
   while (y<yt) {
-    draw_line(x0,y,z0,x1,y,z1,s,zb,c);
+
+    draw_line(x0,y,z0,x1,y,z1,s,zb,c);//need to replace 0 with z values
+    
+    //increments
     y++;
     x0+=delta_x0;
     x1+=delta_x1;
     z0+=delta_z0;
     z1+=delta_z1;
+      
+
   }
+  
+
 }
 
 /*======== void add_polygon() ==========
@@ -126,8 +156,33 @@ void draw_polygons(struct matrix *polygons, screen s, zbuffer zb, color c ) {
   double *normal;
 
   for (point=0; point < polygons->lastcol-2; point+=3) {
+
     normal = calculate_normal(polygons, point);
+
     if ( normal[2] > 0 ) {
+
+      /*
+      draw_line( polygons->m[0][point],
+                 polygons->m[1][point],
+                 polygons->m[2][point],
+                 polygons->m[0][point+1],
+                 polygons->m[1][point+1],
+                 polygons->m[2][point+1],
+                 s, zb, c);
+      draw_line( polygons->m[0][point+2],
+                 polygons->m[1][point+2],
+                 polygons->m[2][point+2],
+                 polygons->m[0][point+1],
+                 polygons->m[1][point+1],
+                 polygons->m[2][point+1],
+                 s, zb, c);
+      draw_line( polygons->m[0][point],
+                 polygons->m[1][point],
+                 polygons->m[2][point],
+                 polygons->m[0][point+2],
+                 polygons->m[1][point+2],
+                 polygons->m[2][point+2],
+                 s, zb, c);*/
       scanline_convert(polygons,point,s,zb);
     }
   }

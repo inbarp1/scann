@@ -70,9 +70,9 @@ struct matrix * make_hermite() {
 /*======== struct matrix * generate_curve_coefs() ==========
   Inputs:   double p0
             double p1
-	        double p2
-		    double p3
-		        int type
+	    double p2
+	    double p3
+	    int type
   Returns: 
   
   A matrix containing the values for a, b, c and d of the
@@ -290,8 +290,8 @@ struct matrix *new_matrix(int rows, int cols) {
 
   tmp = (double **)malloc(rows * sizeof(double *));
   for (i=0;i<rows;i++) {
-    tmp[i]=(double *)malloc(cols * sizeof(double));
-  }
+      tmp[i]=(double *)malloc(cols * sizeof(double));
+    }
 
   m=(struct matrix *)malloc(sizeof(struct matrix));
   m->m=tmp;
@@ -314,8 +314,8 @@ void free_matrix(struct matrix *m) {
 
   int i;
   for (i=0;i<m->rows;i++) {
-    free(m->m[i]);
-  }
+      free(m->m[i]);
+    }
   free(m->m);
   free(m);
 }
@@ -332,7 +332,7 @@ void grow_matrix(struct matrix *m, int newcols) {
   
   int i;
   for (i=0;i<m->rows;i++) {
-    m->m[i] = realloc(m->m[i],newcols*sizeof(double));
+      m->m[i] = realloc(m->m[i],newcols*sizeof(double));
   }
   m->cols = newcols;
 }
